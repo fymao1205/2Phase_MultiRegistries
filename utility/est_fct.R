@@ -1,8 +1,5 @@
 
-# sourceCpp("~/Dropbox/richard/coding-pj4/illness-death/commonf.cpp")
-# sourceCpp("~/Dropbox/richard/coding-pj4/illness-death/log_lik.cpp")
 
-#22/02/17: do not run covariate analysis for mortality intensities
 estL.pwc_dm.f <- function(dt, Xmat, main.cov, nui.cov, brks_T2, brks_T1D, brks_T2D, simplified){
   
   if(brks_T2[1]==0){
