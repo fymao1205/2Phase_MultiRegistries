@@ -1,15 +1,4 @@
-#library(parallel)
-#library(survival)
-#library(MASS)
-#library(Rcpp)
-#library(nleqslv)
-#library(NlcOptim)
-#sourceCpp("/Users/fymao/Downloads/coding-pj4/cleaned/utility/commonf.cpp")
-#sourceCpp("/Users/fymao/Downloads/coding-pj4/cleaned/utility/log_lik.cpp")
-#source("/Users/fymao/Downloads/coding-pj4/cleaned/utility/est_fct.R")
-#source("/Users/fymao/Downloads/coding-pj4/cleaned/utility/ipw_est_fct.R")
-#source("/Users/fymao/Downloads/coding-pj4/cleaned/utility/design_basic.R")
-#source("/Users/fymao/Downloads/coding-pj4/cleaned/utility/design_ipw_suppl.R")
+
 
 rldt_ml_script_DM.f <- function(nsim, n2_samp, prop.a=NULL, dt, Xmat, design, design.factor=c("Y", "del2"), pcuts,
                              main.cov, nui.cov, brks_T2, brks_T1D, brks_T2D, simplified){
