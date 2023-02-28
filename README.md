@@ -14,4 +14,6 @@ Functions for analysis via IPW are included in ipw_est_fct.R
 
 sol_params_fct_general.R: functions for calculating parameters in different configurations for simulating data sets;
 
-rldt_script.R: it displays the flow of simulation runs under maximum likelihood and IPW methods. General steps are 1) specifying the parameter settings; 2) solving for unknown parameters; 3) generating a dataset; 4) implement the two-phase design procedure and 5) conduct the estimation adn inference on parameters of interest. 
+# rldt_script.R 
+
+It displays the flow of simulation runs under maximum likelihood and IPW methods. General steps are 1) specifying the parameter settings; 2) solving for unknown parameters; 3) generating a dataset; 4) implement the two-phase design procedure and 5) conduct the estimation adn inference on parameters of interest. 
