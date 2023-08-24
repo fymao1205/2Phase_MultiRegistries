@@ -8,11 +8,11 @@ This is a repository containing the R code for simulation studies conducted in t
 
 This folder contains all utility functions; 
 
-likelihood function for maximum likelihood estimation and inference purposes are included in loglik.cpp, log_patial_lik_X1truncexp.cpp, log_lik_X1truncexp.cpp and est_fct.R; 
+likelihood function for maximum likelihood estimation and inference purposes are included in *loglik.cpp*, *log_patial_lik_X1truncexp.cpp*, *log_lik_X1truncexp.cpp* and *est_fct.R*; 
 
-Functions for analysis via IPW are included in ipw_est_fct.R
+Functions for analysis via IPW are included in *ipw_est_fct.R*
 
-sol_params_fct_general.R: functions for calculating parameters in different configurations for simulating data sets;
+*sol_params_fct_general.R*: functions for calculating parameters in different configurations for simulating data sets;
 
 ## rldt_script.R 
 
