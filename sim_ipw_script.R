@@ -1,6 +1,6 @@
 
 # ------------------------------------------------------------------------------------------
-# This is a script for one simulation study under likelihood-based analysis
+# This is a script for one simulation study under IPW analysis
 # A for-loop is used for repeated simulations. 
 # In each simulation run, 3 steps are included: 
 #  1) data generation
@@ -16,14 +16,14 @@ library(nleqslv)
 library(NlcOptim)
 source("utility/sol_params_fct_general.R")
 source("utility/data_gen.R")
-sourceCpp("utility/commonf.cpp")
-sourceCpp("utility/log_lik.cpp")
-sourceCpp("utility/log_partial_lik_X1truncexp.cpp")
-sourceCpp("utility/log_lik_X1truncexp.cpp")
-source("utility/est_fct.R")
-#source("utility/ipw_est_fct.R")
+# sourceCpp("utility/commonf.cpp")
+# sourceCpp("utility/log_lik.cpp")
+# sourceCpp("utility/log_partial_lik_X1truncexp.cpp")
+# sourceCpp("utility/log_lik_X1truncexp.cpp")
+# source("utility/est_fct.R")
+source("utility/ipw_est_fct.R")
 source("utility/design_basic.R")
-#source("utility/design_ipw_suppl.R")
+source("utility/design_ipw_suppl.R")
 
 
 ####### Test Data configuration #######
@@ -74,10 +74,11 @@ eta = c(eta0, eta1)
 ### user-specified arguments ###
 
 # phase I stratification strategy
-phI.strat.style="Y" # e.g., stratigying the phase I data based on registry membership; check design_basics.R to see more options
+phI.design.factor="Y" # e.g., stratigying the phase I data based on registry membership; check design_basics.R to see more options
+phI.strat.style = paste0(phI.design.factor, collapse = "_")
 
 # phase II design 
-design="srs" # e.g., simple random sampling; check design_basics.R to see more options
+design="bal" # e.g., balanced stratified sampling; check design_basics.R to see more options
 
 # number of simulation runs
 nsim=1
@@ -142,64 +143,29 @@ for(m in 1:(2*nsim)){
   
   
   # Phase II Selection 
-  
-  if(design=="tao"){ #RDS^W
+  if(design=="ney"){
+    del_beta1 <- try(approx_Delta_beta1_dm.f(gradstep=1e-06, dt_c, Xmat, main.cov, brks_T2, brks_T1D, brks_T2D, 
+                                             vartheta=c(rep(pre.lam0.alp0.mu0[2], length(brks_T2)+1), 
+                                                        c(coeffs.beta_T2), #coeffs.beta_T2[c(2,3,1)],
+                                                        rep(pre.lam0.alp0.mu0[1], length(brks_T1D)+1),
+                                                        rep(pre.lam0.alp0.mu0[3], length(brks_T2D)+1)
+                                             )))
     
-    Mmu <- coxph(Surv(T2_dagger, delta2)~a1.ind.g20.l40+a1.ind.g40+X2, phaseI.res$dt_ext)$resid
-    if(isTRUE(class(Mmu)=="try-error")) { next }
-    s1.res <- rs_noX1.f(n2_samp, strata.n=phaseI.res$strata.n, phaseI.res$dt_ext, ref.group=phaseI.res$ref.strata, score_res=Mmu)
     
-  }else if(design=="ext_Mmu"){ #RDS
+    s1.res <- Neyman_alloc_influence.f(del_beta1, n2_samp, 
+                                       lb.str.n = phaseI.res$strata.n*0.05,
+                                       ub.str.n=phaseI.res$strata.n,
+                                       phaseI.res)
+  }else if(design=="neyA"){
     
-    Mmu <- try(scoreL_mu_pwc_dm.f(phaseI.res$dt_ext, Xmat, main.cov, brks_T2, brks_T1D, brks_T2D, simplified))
-    if(isTRUE(class(Mmu)=="try-error")) { next }
-    s1.res <- rs_noX1_multiX2.f(n2_samp, strata.n=phaseI.res$strata.n, phaseI.res$dt_ext, ref.group=phaseI.res$ref.strata, Mmu)
-    
-  }else if(design=="awext_Mmu"){# RDS_A^W
-    
-    ## phase IIa
-    IIa.res <- try(subopt.f(n2_samp*prop.a, design="srs", phaseI.res))
-    dt_IIa <- phaseI.res$dt_ext 
-    dt_IIa[!(dt_IIa$id %in% IIa.res$s_id), "X1"] <- NA
-    dt_IIa[!(dt_IIa$id %in% IIa.res$s_id), "R"] <- 0
-    dt_IIa$probs <- sapply(dt_IIa$group, function(x){
-      IIa.res$s_prob[x == phaseI.res$ref.strata]
-    })
-    
-    sIIa.est <- try(estL.pwc_dm.f(dt_IIa, Xmat, main.cov, nui.cov, brks_T2, brks_T1D, brks_T2D, simplified))
-    if(isTRUE(class(sIIa.est)=="try-error")) { 
-      next
-    }
-    if(is.null(nui.cov)){
-      mu_X = as.vector(rep(c(sIIa.est$est[num.pwc_T2+length(main.cov)+num.pwc_T1D+num.pwc_T2D+2]), dim(Xmat)[1]))
-    }else{
-      params.X = c(sIIa.est$est[num.pwc_T2+length(main.cov)+num.pwc_T1D+num.pwc_T2D+1+(1:(length(nui.cov)+1))])
-      mu_X = as.vector(params.X[1]+Xmat[,nui.cov, drop=F] %*% params.X[-1])
-    }
-    p_1_g_x2 <- expit(mu_X)
-    var_x1_g_x2 <- p_1_g_x2*(1-p_1_g_x2)
-    
-    phaseI_res.b = phaseI.res
-    phaseI_res.b$strata.n <- phaseI.res$strata.n*(1-IIa.res$s_prob)
-    phaseI_res.b$Abar_cut <- phaseI.res$Abar_cut
-    phaseI_res.b$dt_ext <- subset(phaseI.res$dt_ext, !(id %in% IIa.res$s_id))
-    phaseI_res.b$ref.strata <- phaseI.res$ref.strata
-    nsmp.b=n2_samp*(1-prop.a)
-    
-    Mmu <- try(scoreL_mu_pwc_dm.f(phaseI.res$dt_ext, Xmat, main.cov, brks_T2, brks_T1D, brks_T2D, simplified))
-    if(isTRUE(class(Mmu)=="try-error")) { next }
-    var_x1_g_x2.b <- var_x1_g_x2[!(dt_IIa$id %in% IIa.res$s_id)]
-    Mmu.b <- Mmu[!(dt_IIa$id %in% IIa.res$s_id)]*sqrt(var_x1_g_x2.b)
-    s0.res <- rs_noX1_multiX2.f(n2_samp*(1-prop.a), strata.n=phaseI_res.b$strata.n, phaseI_res.b$dt_ext, 
-                                ref.group=phaseI_res.b$ref.strata, Mmu.b)
-    s1.res <- s0.res
-    s1.res$s_id <- c(IIa.res$s_id, s0.res$s_id)
-    s1.res$s_m <- c(IIa.res$s_m+s0.res$s_m)
-    s1.res$sprob <- s1.res$s_m/phaseI.res$strata.n
+    n2_samp_a = n2_samp*prop.a
+    s1.res <- Neyman_adpt_2wave_dm.f(gradstep=1e-06, brks_T2, brks_T1D, brks_T2D, n2_samp_a, n2_samp, 
+                                     pcuts, phI.design.factor, #phII.design, 
+                                     phaseI.res, Xmat, main.cov, simplified)
     
   }else{
     
-    s1.res <- subopt.f(n2_samp, design, phaseI.res) # SRS, stratified designs, and ODS
+    s1.res <- subopt.f(n2_samp, design, phaseI.res)
     
   }
   
@@ -207,18 +173,24 @@ for(m in 1:(2*nsim)){
   dt_s1 <- phaseI.res$dt_ext
   dt_s1[!(dt_s1$id %in% s1.res$s_id), "X1"] <- NA
   dt_s1[!(dt_s1$id %in% s1.res$s_id), "R"] <- 0
+  dt_s1$probs <- sapply(dt_s1$group, function(x){
+    s1.res$s_prob[x == phaseI.res$ref.strata]
+  })
   
   # check how many individuals are selected from each registry
   s.Y = as.data.frame(xtabs(~Y, subset(dt_s1, R==1)))$Freq
-  
+
   # estimation after a two-phase design
-  s1.est <- try(estL.pwc_dm.f(dt_s1, Xmat, main.cov, nui.cov, brks_T2, brks_T1D, brks_T2D, simplified))
+  s1.est <- try(ipw_estL.pwc_dm.f(subset(dt_s1, R==1), Xmat[dt_s1$R==1,], main.cov, brks_T2, brks_T1D, brks_T2D, simplified))
   if(isTRUE(class(s1.est)=="try-error")) { 
     next
   }
   
   # compute standard errors 
-  s1.ase = try(sw.aseL.pwc_dm.f(1e-06, s1.est$est, dt_s1, Xmat, main.cov, nui.cov, brks_T2, brks_T1D, brks_T2D, simplified))
+  s1.ase <- try(ipw_estL.pwc.ase_dm.f(1e-06, s1.est$par, phaseI.res$ref.strata, subset(dt_s1, R==1), Xmat[dt_s1$R==1,], main.cov, brks_T2, brks_T1D, brks_T2D, simplified))
+  if(isTRUE(class(s1.ase)=="try-error")) { 
+    next
+  }
   
   print(iter)
   iter = iter + 1
