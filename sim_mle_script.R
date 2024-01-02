@@ -109,7 +109,7 @@ for(m in 1:(2*nsim)){
   
   # generate covariates
   res.X <- gen_x1x2(n, P1, P2, OR) 
-  # simulate data from the 6-state model 
+  # simulate data from the multistate model 
   dt_0 = gen_illdeath_6state.f(n, X=res.X$data_x1x2, family_01="weibull", params_01=c(lam0, 1), coeffs.beta_01= coeffs.beta_T1,
                                family_12="weibull", params_12=c(exp(pre.lam0.alp0.mu0[2]), 1), coeffs.beta_12= coeffs.beta_T2,
                                family_0D="weibull", params_0D=c(exp(pre.lam0.alp0.mu0[3]), 1), coeffs.beta_0D= coeffs.beta_TD,
