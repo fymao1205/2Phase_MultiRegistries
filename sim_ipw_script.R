@@ -41,7 +41,7 @@ b0=0; b1=100
 # recruitment date of each disease registry
 S0=b1; set_S0=b1; 
 # proportion of healthy individuals (in state 0) in the cross-sectional population
-pY0=0.5; 
+pY0=0.4; 
 # proportion of individuals in state 1 in the cross-sectional population
 pY1=0.01; 
 # proportion of individuals in state 2 in the cross-sectional population
