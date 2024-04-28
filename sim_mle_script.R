@@ -1,19 +1,19 @@
 
 # ------------------------------------------------------------------------------------------
 # This is a script for one simulation study under likelihood-based analysis
+# R version 4.2.2 (2022-06-23) was used for the analysis
 # A for-loop is used for repeated simulations. 
 # In each simulation run, 3 steps are included: 
 #  1) data generation
 #  2) two-phase design implementation
 #  3) estimation and inference
 # ------------------------------------------------------------------------------------------
-
-library(parallel)
-library(survival)
-library(MASS)
-library(Rcpp)
-library(nleqslv)
-library(NlcOptim)
+library(parallel) # Version 4.2.1
+library(survival) # Version 3.3-1
+library(MASS) # Version 7.3-57
+library(Rcpp) # Version 1.0.9
+library(nleqslv) # Version 3.3.5
+library(NlcOptim) # Version 0.6
 source("utility/sol_params_fct_general.R")
 source("utility/data_gen.R")
 sourceCpp("utility/commonf.cpp")
@@ -109,7 +109,7 @@ for(m in 1:(2*nsim)){
   
   # generate covariates
   res.X <- gen_x1x2(n, P1, P2, OR) 
-  # simulate data from the multistate model 
+  # simulate data from the 6-state model 
   dt_0 = gen_illdeath_6state.f(n, X=res.X$data_x1x2, family_01="weibull", params_01=c(lam0, 1), coeffs.beta_01= coeffs.beta_T1,
                                family_12="weibull", params_12=c(exp(pre.lam0.alp0.mu0[2]), 1), coeffs.beta_12= coeffs.beta_T2,
                                family_0D="weibull", params_0D=c(exp(pre.lam0.alp0.mu0[3]), 1), coeffs.beta_0D= coeffs.beta_TD,
